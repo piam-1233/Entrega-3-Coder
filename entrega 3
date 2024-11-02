@@ -1,1 +1,227 @@
+-- Crear esquema VRM si no existe
+CREATE SCHEMA IF NOT EXISTS VRM;
 
+-- Usar el esquema VRM
+USE VRM;
+
+-- Crear tabla Branch si no existe
+CREATE TABLE IF NOT EXISTS Branch (
+  BranchID INT NOT NULL,
+  BranchName VARCHAR(100) NOT NULL,
+  Location VARCHAR(100) NOT NULL,
+  PRIMARY KEY (BranchID),
+  UNIQUE INDEX BranchID_UNIQUE (BranchID ASC)
+) ENGINE=InnoDB;
+
+-- Crear tabla Vehicle si no existe
+CREATE TABLE IF NOT EXISTS Vehicle (
+  VIN VARCHAR(17) NOT NULL,
+  Make VARCHAR(50) NOT NULL,
+  Model VARCHAR(50) NOT NULL,
+  Year INT NOT NULL,
+  Mileage INT NOT NULL,
+  PurchasePrice DATE NOT NULL,
+  Status VARCHAR(20) NOT NULL,
+  Branch_BranchID INT NOT NULL,
+  PRIMARY KEY (VIN, Branch_BranchID),
+  INDEX fk_Vehicle_Branch_idx (Branch_BranchID ASC),
+  CONSTRAINT fk_Vehicle_Branch
+    FOREIGN KEY (Branch_BranchID)
+    REFERENCES Branch (BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- Crear tabla Employee si no existe
+CREATE TABLE IF NOT EXISTS Employee (
+  EmployeeID INT NOT NULL,
+  Name VARCHAR(100) NOT NULL,
+  Role VARCHAR(50) NOT NULL,
+  HireDate DATE NOT NULL,
+  Branch_BranchID INT NOT NULL,
+  PRIMARY KEY (EmployeeID, Branch_BranchID),
+  UNIQUE INDEX EmployeeID_UNIQUE (EmployeeID ASC),
+  INDEX fk_Employee_Branch1_idx (Branch_BranchID ASC),
+  CONSTRAINT fk_Employee_Branch1
+    FOREIGN KEY (Branch_BranchID)
+    REFERENCES Branch (BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- Crear tabla RepairJob si no existe
+CREATE TABLE IF NOT EXISTS RepairJob (
+  RepairJobID INT NOT NULL,
+  ServiceType VARCHAR(50) NOT NULL,
+  PartsCost DECIMAL(10,2) NOT NULL,
+  LaborHours DECIMAL(5,2) NOT NULL,
+  TotalCost DECIMAL(10,2) NOT NULL,
+  Status VARCHAR(20) NOT NULL,
+  Date DATE NOT NULL,
+  Vehicle_VIN VARCHAR(17) NOT NULL,
+  Vehicle_Branch_BranchID INT NOT NULL,
+  Employee_EmployeeID INT NOT NULL,
+  PRIMARY KEY (RepairJobID, Vehicle_VIN, Vehicle_Branch_BranchID, Employee_EmployeeID),
+  UNIQUE INDEX RepairJobID_UNIQUE (RepairJobID ASC),
+  INDEX fk_RepairJob_Vehicle1_idx (Vehicle_VIN ASC, Vehicle_Branch_BranchID ASC),
+  INDEX fk_RepairJob_Employee1_idx (Employee_EmployeeID ASC),
+  CONSTRAINT fk_RepairJob_Vehicle1
+    FOREIGN KEY (Vehicle_VIN, Vehicle_Branch_BranchID)
+    REFERENCES Vehicle (VIN, Branch_BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_RepairJob_Employee1
+    FOREIGN KEY (Employee_EmployeeID)
+    REFERENCES Employee (EmployeeID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- Crear tabla Supplier si no existe
+CREATE TABLE IF NOT EXISTS Supplier (
+  SupplierID INT NOT NULL,
+  SupplierName VARCHAR(100) NOT NULL,
+  ContactInfo VARCHAR(100) NOT NULL,
+  DeliveryRating DECIMAL(3,2) NOT NULL,
+  QualityRating DECIMAL(3,2) NOT NULL,
+  PriceRating DECIMAL(3,2) NOT NULL,
+  PRIMARY KEY (SupplierID),
+  UNIQUE INDEX SupplierID_UNIQUE (SupplierID ASC)
+) ENGINE=InnoDB;
+
+-- Crear tabla Part si no existe
+CREATE TABLE IF NOT EXISTS Part (
+  PartID INT NOT NULL,
+  PartName VARCHAR(50) NOT NULL,
+  PartType VARCHAR(50) NOT NULL,
+  UnitCost DECIMAL(10,2) NOT NULL,
+  StockQuantity INT NOT NULL,
+  Supplier_SupplierID INT NOT NULL,
+  Vehicle_VIN VARCHAR(17) NOT NULL,
+  Vehicle_Branch_BranchID INT NOT NULL,
+  PRIMARY KEY (PartID, Supplier_SupplierID, Vehicle_VIN, Vehicle_Branch_BranchID),
+  UNIQUE INDEX PartID_UNIQUE (PartID ASC),
+  INDEX fk_Part_Supplier1_idx (Supplier_SupplierID ASC),
+  INDEX fk_Part_Vehicle1_idx (Vehicle_VIN ASC, Vehicle_Branch_BranchID ASC),
+  CONSTRAINT fk_Part_Supplier1
+    FOREIGN KEY (Supplier_SupplierID)
+    REFERENCES Supplier (SupplierID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Part_Vehicle1
+    FOREIGN KEY (Vehicle_VIN, Vehicle_Branch_BranchID)
+    REFERENCES Vehicle (VIN, Branch_BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- Crear tabla Client si no existe
+CREATE TABLE IF NOT EXISTS Client (
+  ClientID INT NOT NULL,
+  Name VARCHAR(100) NOT NULL,
+  ContactInfo VARCHAR(100) NOT NULL,
+  Address VARCHAR(200) NOT NULL,
+  ClientType VARCHAR(20) NOT NULL,
+  PRIMARY KEY (ClientID),
+  UNIQUE INDEX ClientID_UNIQUE (ClientID ASC)
+) ENGINE=InnoDB;
+
+-- Crear tabla Promotion si no existe
+CREATE TABLE IF NOT EXISTS Promotion (
+  PromotionID INT NOT NULL,
+  Description VARCHAR(255) NOT NULL,
+  StartDate DATE NOT NULL,
+  EndDate DATE NOT NULL,
+  DiscountRate DECIMAL(5,2) NOT NULL,
+  PRIMARY KEY (PromotionID),
+  UNIQUE INDEX PromotionID_UNIQUE (PromotionID ASC)
+) ENGINE=InnoDB;
+
+-- Crear tabla Sale si no existe
+CREATE TABLE IF NOT EXISTS Sale (
+  SaleID INT NOT NULL,
+  SaleDate DATE NOT NULL,
+  SalePrice DECIMAL(10,2) NOT NULL,
+  Vehicle_VIN VARCHAR(17) NOT NULL,
+  Vehicle_Branch_BranchID INT NOT NULL,
+  Client_ClientID INT NOT NULL,
+  Employee_EmployeeID INT NOT NULL,
+  Promotion_PromotionID INT NOT NULL,
+  PRIMARY KEY (SaleID, Vehicle_VIN, Vehicle_Branch_BranchID, Client_ClientID, Employee_EmployeeID, Promotion_PromotionID),
+  UNIQUE INDEX SaleID_UNIQUE (SaleID ASC),
+  INDEX fk_Sale_Vehicle1_idx (Vehicle_VIN ASC, Vehicle_Branch_BranchID ASC),
+  INDEX fk_Sale_Client1_idx (Client_ClientID ASC),
+  INDEX fk_Sale_Employee1_idx (Employee_EmployeeID ASC),
+  INDEX fk_Sale_Promotion1_idx (Promotion_PromotionID ASC),
+  CONSTRAINT fk_Sale_Vehicle1
+    FOREIGN KEY (Vehicle_VIN, Vehicle_Branch_BranchID)
+    REFERENCES Vehicle (VIN, Branch_BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Sale_Client1
+    FOREIGN KEY (Client_ClientID)
+    REFERENCES Client (ClientID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Sale_Employee1
+    FOREIGN KEY (Employee_EmployeeID)
+    REFERENCES Employee (EmployeeID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Sale_Promotion1
+    FOREIGN KEY (Promotion_PromotionID)
+    REFERENCES Promotion (PromotionID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- Crear tabla ServiceAppointment si no existe
+CREATE TABLE IF NOT EXISTS ServiceAppointment (
+  AppointmentID INT NOT NULL,
+  AppointmentDate DATE NOT NULL,
+  ServiceType VARCHAR(50) NOT NULL,
+  Status VARCHAR(20) NOT NULL,
+  Vehicle_VIN VARCHAR(17) NOT NULL,
+  Vehicle_Branch_BranchID INT NOT NULL,
+  Client_ClientID INT NOT NULL,
+  Employee_EmployeeID INT NOT NULL,
+  Employee_Branch_BranchID INT NOT NULL,
+  PRIMARY KEY (AppointmentID, Vehicle_VIN, Vehicle_Branch_BranchID, Client_ClientID, Employee_EmployeeID, Employee_Branch_BranchID),
+  UNIQUE INDEX AppointmentID_UNIQUE (AppointmentID ASC),
+  INDEX fk_ServiceAppointment_Vehicle1_idx (Vehicle_VIN ASC, Vehicle_Branch_BranchID ASC),
+  INDEX fk_ServiceAppointment_Client1_idx (Client_ClientID ASC),
+  INDEX fk_ServiceAppointment_Employee1_idx (Employee_EmployeeID ASC, Employee_Branch_BranchID ASC),
+  CONSTRAINT fk_ServiceAppointment_Vehicle1
+    FOREIGN KEY (Vehicle_VIN, Vehicle_Branch_BranchID)
+    REFERENCES Vehicle (VIN, Branch_BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_ServiceAppointment_Client1
+    FOREIGN KEY (Client_ClientID)
+    REFERENCES Client (ClientID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_ServiceAppointment_Employee1
+    FOREIGN KEY (Employee_EmployeeID, Employee_Branch_BranchID)
+    REFERENCES Employee (EmployeeID, Branch_BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- Crear tabla Warranty si no existe
+CREATE TABLE IF NOT EXISTS Warranty (
+  WarrantyID INT NOT NULL,
+  CoverageDetails TEXT NOT NULL,
+  StartDate DATE NOT NULL,
+  EndDate DATE NOT NULL,
+  Vehicle_VIN VARCHAR(17) NOT NULL,
+  Vehicle_Branch_BranchID INT NOT NULL,
+  PRIMARY KEY (WarrantyID, Vehicle_VIN, Vehicle_Branch_BranchID),
+  UNIQUE INDEX WarrantyID_UNIQUE (WarrantyID ASC),
+  INDEX fk_Warranty_Vehicle1_idx (Vehicle_VIN ASC, Vehicle_Branch_BranchID ASC),
+  CONSTRAINT fk_Warranty_Vehicle1
+    FOREIGN KEY (Vehicle_VIN, Vehicle_Branch_BranchID)
+    REFERENCES Vehicle (VIN, Branch_BranchID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB;
